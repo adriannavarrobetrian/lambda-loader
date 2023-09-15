@@ -1,13 +1,12 @@
 def functionName = 'MoviesLoader'
-def imageName = 'mlabouardy/movies-loader'
-def bucket = 'deployment-packages-watchlist'
-def region = 'eu-west-3'
+def imageName = 'adriannavarro/loader'
+def bucket = 'deployment-packages-watchlist.test123456'
+def region = 'eu-west-1'
 
-node('workers'){
+node('jenkins_agent'){
     try {
         stage('Checkout'){
             checkout scm
-            notifySlack('STARTED')
         }
 
         stage('Unit Tests'){
@@ -37,28 +36,9 @@ node('workers'){
         currentBuild.result = 'FAILED'
         throw e
     } finally {
-        notifySlack(currentBuild.result)
         sh "rm ${commitID()}.zip"
     }
 }
-
-def notifySlack(String buildStatus){
-    buildStatus =  buildStatus ?: 'SUCCESSFUL'
-    def colorCode = '#FF0000'
-    def subject = "Name: '${env.JOB_NAME}'\nStatus: ${buildStatus}\nBuild ID: ${env.BUILD_NUMBER}"
-    def summary = "${subject}\nMessage: ${commitMessage()}\nAuthor: ${commitAuthor()}\nURL: ${env.BUILD_URL}"
-
-    if (buildStatus == 'STARTED') {
-        colorCode = '#546e7a'
-    } else if (buildStatus == 'SUCCESSFUL') {
-        colorCode = '#2e7d32'
-    } else {
-        colorCode = '#c62828c'
-    }
-
-    slackSend (color: colorCode, message: summary)
-}
-
 
 def commitAuthor(){
     sh 'git show -s --pretty=%an > .git/commitAuthor'
